@@ -184,6 +184,8 @@ See:
 - `docs/OPERATIONS.md` for the Monday workflow, artifacts, failure handling,
   and notification boundary.
 - `docs/VALIDATION_LOG.md` for recorded visual and mechanical checks.
+- `docs/TRANSITION_AUDIT.md` for the manual review of all 37 frozen-baseline
+  Stage 2A/4A transition windows.
 
 ## Codex
 

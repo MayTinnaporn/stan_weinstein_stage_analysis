@@ -8,6 +8,10 @@ Before making architectural or modeling decisions, read `PROJECT_BRIEF.md` and t
 
 Both V0 implementations exist, but the first active validation priority is still the cryptocurrency system.
 
+The frozen four-asset baseline and manual transition audit are complete. The
+next research task is to define episode identity and improve diagnostic charts
+as described in `docs/TRANSITION_AUDIT.md`; do not tune numeric thresholds yet.
+
 The long-term operating target is a Monday-morning scan of point-in-time S&P
 500 constituents and the eligible top 40 cryptocurrencies, followed by
 notification of newly entered Stage 2A and Stage 4A states. Notifications and

@@ -80,3 +80,7 @@ The baseline does not justify threshold optimization. The next research step is
 to inspect the 37 transition windows, identify repeatable classification failure
 modes, and define any hypothesis change before testing a broader point-in-time
 universe.
+
+That review is complete. See `docs/TRANSITION_AUDIT.md` for the all-event table,
+failure-mode taxonomy, and prioritized hypotheses. No classifier thresholds
+were changed during the audit.
