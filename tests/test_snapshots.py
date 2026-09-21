@@ -36,6 +36,11 @@ def test_analysis_and_batch_snapshots_are_persisted(tmp_path):
         Stage4A=[False, False],
         Stage2A_Event=[False, True],
         Stage4A_Event=[False, False],
+        Weeks_Since_Stage2A_Event=pd.Series(
+            [pd.NA, 1],
+            index=weekly.index,
+            dtype="Int64",
+        ),
     )
     as_of = pd.Timestamp("2026-09-21T01:00:00Z")
     bundle = AnalysisBundle("crypto", "BTC/USDT", as_of, daily, weekly, analysis)

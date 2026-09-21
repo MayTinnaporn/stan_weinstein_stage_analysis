@@ -193,7 +193,7 @@ def summarize_walk_forward_outcomes(outcomes: pd.DataFrame) -> pd.DataFrame:
             observed = group.loc[group["OutcomeAvailable"].astype(bool)]
             returns = observed["ForwardReturn"].astype(float)
             directional_success = (
-                returns < 0 if str(event) == "Stage4A_Event" else returns > 0
+                returns < 0 if str(event).startswith("Stage4A") else returns > 0
             )
             rows.append(
                 {

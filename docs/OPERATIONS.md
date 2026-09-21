@@ -51,6 +51,10 @@ Run the independently configured stock and crypto classifiers. Notifications
 should be based on `Stage2A_Event` and `Stage4A_Event`, not the raw candidate
 columns, so a condition persisting for several weeks produces one event.
 
+For crypto research, parallel episode-start, continuation, and next-week
+confirmation columns are also persisted. They remain experimental and must not
+replace the V0 notification fields until their semantics are accepted.
+
 ### 4. Persist before delivery
 
 Each run should retain:

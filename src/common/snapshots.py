@@ -69,7 +69,14 @@ def save_analysis_bundle(
     _write_csv(bundle.weekly, asset_directory / "weekly.csv")
     _write_csv(bundle.analysis, asset_directory / "analysis.csv")
 
-    event_columns = ["Stage2A_Event", "Stage4A_Event"]
+    event_columns = [
+        column
+        for column in bundle.analysis.columns
+        if column.endswith("_Event")
+        and pd.api.types.is_bool_dtype(bundle.analysis[column].dtype)
+    ]
+    if not event_columns:
+        raise ValueError("Analysis bundle does not contain transition event columns")
     event_mask = bundle.analysis[event_columns].fillna(False).any(axis=1)
     _write_csv(bundle.analysis.loc[event_mask], asset_directory / "events.csv")
 

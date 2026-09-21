@@ -155,6 +155,7 @@ hash, then writes:
 - per-fold and all-fold summaries,
 - Stage 2A-entry/Stage 4A-exit cost sensitivity,
 - fold definitions, source hashes, and the frozen configuration,
+- episode-start, continuation, and next-week-confirmation counts,
 - focused charts around every transition,
 - a Markdown baseline report.
 
@@ -186,6 +187,8 @@ See:
 - `docs/VALIDATION_LOG.md` for recorded visual and mechanical checks.
 - `docs/TRANSITION_AUDIT.md` for the manual review of all 37 frozen-baseline
   Stage 2A/4A transition windows.
+- `docs/SEMANTIC_COMPARISON.md` for the episode-start, continuation, and
+  next-week-confirmation experiment.
 
 ## Codex
 

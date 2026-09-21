@@ -18,6 +18,16 @@ LATEST_FIELDS = [
     "Stage4A",
     "Stage2A_Event",
     "Stage4A_Event",
+    "Stage_Run_ID",
+    "Weeks_In_Stage",
+    "Weeks_Since_Stage2A_Event",
+    "Weeks_Since_Stage4A_Event",
+    "Stage2A_EpisodeStart_Event",
+    "Stage2A_Continuation_Event",
+    "Stage2A_Confirmed_Event",
+    "Stage4A_EpisodeStart_Event",
+    "Stage4A_Continuation_Event",
+    "Stage4A_Confirmed_Event",
 ]
 
 

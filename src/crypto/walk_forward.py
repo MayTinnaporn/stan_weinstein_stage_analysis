@@ -16,6 +16,17 @@ from common.walk_forward import (
     summarize_walk_forward_outcomes,
 )
 
+COMPARISON_EVENT_COLUMNS = (
+    "Stage2A_Event",
+    "Stage2A_EpisodeStart_Event",
+    "Stage2A_Confirmed_Event",
+    "Stage2A_Continuation_Event",
+    "Stage4A_Event",
+    "Stage4A_EpisodeStart_Event",
+    "Stage4A_Confirmed_Event",
+    "Stage4A_Continuation_Event",
+)
+
 
 def _resolve_crypto_directory(run_directory: str | Path) -> Path:
     candidate = Path(run_directory)
@@ -68,6 +79,7 @@ def _plot_transition_windows(
     output_directory: Path,
     min_history_weeks: int,
     window_weeks: int,
+    stage2a_volume_threshold: float,
 ) -> int:
     output_directory.mkdir(parents=True, exist_ok=True)
     event_columns = ("Stage2A_Event", "Stage4A_Event")
@@ -83,20 +95,42 @@ def _plot_transition_windows(
             window = analysis.iloc[start:end]
             event_week = analysis.index[position]
 
-            fig, ax = plt.subplots(figsize=(11, 5))
-            ax.plot(window.index, window["Close"], label="Weekly Close", linewidth=1.8)
+            fig, axes = plt.subplots(
+                4,
+                1,
+                figsize=(12, 10),
+                sharex=True,
+                gridspec_kw={"height_ratios": [3.0, 1.1, 1.1, 1.1]},
+            )
+            price_ax, volume_ax, extension_ax, context_ax = axes
+            price_ax.plot(
+                window.index,
+                window["Close"],
+                label="Weekly Close",
+                linewidth=1.8,
+            )
             if "MA30" in window.columns:
-                ax.plot(window.index, window["MA30"], label="30W SMA", linewidth=1.2)
+                price_ax.plot(
+                    window.index,
+                    window["MA30"],
+                    label="30W SMA",
+                    linewidth=1.2,
+                )
             for column, label in (
                 ("Resistance_26w", "26W Resistance"),
                 ("Support_26w", "26W Support"),
             ):
                 if column in window.columns:
-                    ax.plot(window.index, window[column], label=label, linestyle="--")
+                    price_ax.plot(
+                        window.index,
+                        window[column],
+                        label=label,
+                        linestyle="--",
+                    )
 
             color = "green" if event_column == "Stage2A_Event" else "red"
-            ax.axvline(event_week, color=color, linestyle=":", linewidth=2)
-            ax.scatter(
+            price_ax.axvline(event_week, color=color, linestyle=":", linewidth=2)
+            price_ax.scatter(
                 [event_week],
                 [analysis["Close"].iloc[position]],
                 color=color,
@@ -104,11 +138,103 @@ def _plot_transition_windows(
                 zorder=5,
                 label=event_column,
             )
-            ax.set_title(f"{symbol} {event_column} — {event_week.date()}")
-            ax.set_xlabel("Completed week")
-            ax.set_ylabel("Price")
-            ax.grid(True, alpha=0.25)
-            ax.legend(loc="best")
+
+            prefix = "Stage2A" if event_column == "Stage2A_Event" else "Stage4A"
+            role = "episode start"
+            if bool(analysis[f"{prefix}_Continuation_Event"].iloc[position]):
+                role = "continuation"
+            episode_id = analysis[f"{prefix}_Episode_ID"].iloc[position]
+            confirmation_position = position + 1
+            if confirmation_position < len(analysis):
+                confirmation_week = analysis.index[confirmation_position]
+                if bool(
+                    analysis[f"{prefix}_Confirmed_Event"].iloc[confirmation_position]
+                ):
+                    price_ax.scatter(
+                        [confirmation_week],
+                        [analysis["Close"].iloc[confirmation_position]],
+                        marker="*",
+                        color="blue",
+                        s=130,
+                        zorder=6,
+                        label="next-week confirmed",
+                    )
+                elif bool(
+                    analysis[f"{prefix}_FailedConfirmation_Event"].iloc[
+                        confirmation_position
+                    ]
+                ):
+                    price_ax.scatter(
+                        [confirmation_week],
+                        [analysis["Close"].iloc[confirmation_position]],
+                        marker="x",
+                        color="black",
+                        s=80,
+                        zorder=6,
+                        label="next-week failed",
+                    )
+
+            price_ax.set_title(
+                f"{symbol} {event_column} — {event_week.date()} "
+                f"({role}, episode {episode_id})"
+            )
+            price_ax.set_ylabel("Price")
+            price_ax.grid(True, alpha=0.25)
+            price_ax.legend(loc="best")
+
+            volume_ax.plot(
+                window.index,
+                window["Volume_ratio"],
+                color="tab:purple",
+                label="Volume / prior 20W average",
+            )
+            volume_ax.axhline(
+                stage2a_volume_threshold,
+                color="gray",
+                linestyle="--",
+                label=f"2A threshold {stage2a_volume_threshold:.2f}",
+            )
+            volume_ax.set_ylabel("Volume ratio")
+            volume_ax.grid(True, alpha=0.2)
+            volume_ax.legend(loc="best")
+
+            extension_ax.plot(
+                window.index,
+                window["MA_distance_ATR"],
+                color="tab:orange",
+                label="Distance from MA / ATR",
+            )
+            extension_ax.axhline(0.0, color="gray", linewidth=0.8)
+            extension_ax.set_ylabel("MA distance")
+            extension_ax.grid(True, alpha=0.2)
+            extension_ax.legend(loc="best")
+
+            context_ax.step(
+                window.index,
+                window["Stage"],
+                where="post",
+                color="tab:blue",
+                label="Stage",
+            )
+            context_ax.set_yticks([1, 2, 3, 4])
+            context_ax.set_ylabel("Stage")
+            if "RS_BTC_slope_4w" in window.columns:
+                rs_ax = context_ax.twinx()
+                rs_ax.plot(
+                    window.index,
+                    window["RS_BTC_slope_4w"],
+                    color="tab:brown",
+                    alpha=0.75,
+                    label="BTC RS slope 4W",
+                )
+                rs_ax.axhline(0.0, color="gray", linewidth=0.8)
+                rs_ax.set_ylabel("RS slope")
+                context_ax.legend(loc="upper left")
+                rs_ax.legend(loc="upper right")
+            else:
+                context_ax.legend(loc="best")
+            context_ax.grid(True, alpha=0.2)
+            context_ax.set_xlabel("Completed week")
             fig.tight_layout()
 
             safe_symbol = symbol.replace("/", "_").replace(":", "_")
@@ -165,9 +291,10 @@ def _write_report(
     test_window_weeks: int,
     chart_count: int,
     summary: pd.DataFrame,
+    event_counts: pd.DataFrame,
 ) -> None:
     lines = [
-        "# Crypto Walk-Forward Baseline Report",
+        "# Crypto Walk-Forward Semantic Comparison",
         "",
         "This report evaluates the frozen classifier chronologically. It does not fit",
         "or tune parameters inside any fold. Outcomes use only bars after each event;",
@@ -183,6 +310,19 @@ def _write_report(
         f"- Test block: {test_window_weeks} weeks",
         f"- Forward horizons: {', '.join(f'{value}w' for value in horizons)}",
         f"- Transition charts: {chart_count}",
+        "",
+        "## Event counts",
+        "",
+        "V0 rising edges are preserved. Episode starts and continuations are",
+        "classified at the candidate week; confirmed events occur one completed",
+        "week later and therefore use no future information at their timestamp.",
+        "",
+        "| Event | Count |",
+        "|---|---:|",
+        *[
+            f"| {row.Event} | {row.Count} |"
+            for row in event_counts.itertuples(index=False)
+        ],
         "",
         "## Aggregate transition outcomes",
         "",
@@ -242,6 +382,7 @@ def run_crypto_walk_forward_validation(
     outcome_tables: list[pd.DataFrame] = []
     fold_tables: list[pd.DataFrame] = []
     cost_rows: list[dict[str, Any]] = []
+    event_count_rows: list[dict[str, Any]] = []
     input_files: list[dict[str, str]] = []
     symbols: list[str] = []
     chart_count = 0
@@ -250,6 +391,9 @@ def run_crypto_walk_forward_validation(
         symbol = _symbol_from_analysis_path(analysis_path)
         symbols.append(symbol)
         analysis = _read_analysis(analysis_path)
+        comparison_columns = [
+            column for column in COMPARISON_EVENT_COLUMNS if column in analysis.columns
+        ]
         input_files.append(
             {"path": str(analysis_path), "sha256": _file_sha256(analysis_path)}
         )
@@ -268,23 +412,51 @@ def run_crypto_walk_forward_validation(
                 horizons=horizons,
                 min_history_weeks=min_history_weeks,
                 test_window_weeks=test_window_weeks,
+                event_columns=comparison_columns,
             )
         )
 
         evaluation_data = analysis.iloc[min_history_weeks:].copy()
-        for cost_bps in cost_bps_per_side:
-            trades = backtest_long_transitions(
-                evaluation_data,
-                transaction_cost_bps_per_side=float(cost_bps),
-            )
-            trade_summary = summarize_trades(trades)
-            cost_rows.append(
+        for event_column in comparison_columns:
+            event_count_rows.append(
                 {
                     "Symbol": symbol,
-                    "CostBpsPerSide": float(cost_bps),
-                    **trade_summary.to_dict(),
+                    "Event": event_column,
+                    "Count": int(
+                        evaluation_data[event_column].fillna(False).astype(bool).sum()
+                    ),
                 }
             )
+
+        signal_variants = [("V0", "Stage2A_Event", "Stage4A_Event")]
+        if {
+            "Stage2A_Confirmed_Event",
+            "Stage4A_Confirmed_Event",
+        }.issubset(evaluation_data.columns):
+            signal_variants.append(
+                (
+                    "Confirmed",
+                    "Stage2A_Confirmed_Event",
+                    "Stage4A_Confirmed_Event",
+                )
+            )
+        for variant, entry_column, exit_column in signal_variants:
+            for cost_bps in cost_bps_per_side:
+                trades = backtest_long_transitions(
+                    evaluation_data,
+                    entry_column=entry_column,
+                    exit_column=exit_column,
+                    transaction_cost_bps_per_side=float(cost_bps),
+                )
+                trade_summary = summarize_trades(trades)
+                cost_rows.append(
+                    {
+                        "Symbol": symbol,
+                        "SignalVariant": variant,
+                        "CostBpsPerSide": float(cost_bps),
+                        **trade_summary.to_dict(),
+                    }
+                )
 
         if write_charts:
             chart_count += _plot_transition_windows(
@@ -293,6 +465,9 @@ def run_crypto_walk_forward_validation(
                 output_directory=output_path / "transition_charts",
                 min_history_weeks=min_history_weeks,
                 window_weeks=chart_window_weeks,
+                stage2a_volume_threshold=float(
+                    config["classifier"]["stage2a_min_volume_ratio"]
+                ),
             )
 
     outcomes = pd.concat(outcome_tables, ignore_index=True)
@@ -306,11 +481,22 @@ def run_crypto_walk_forward_validation(
         )
     folds = pd.concat(fold_tables, ignore_index=True)
     cost_sensitivity = pd.DataFrame(cost_rows)
+    event_counts_by_symbol = pd.DataFrame(event_count_rows)
+    event_counts = (
+        event_counts_by_symbol.groupby("Event", as_index=False)["Count"]
+        .sum()
+        .sort_values("Event")
+    )
 
     outcomes.to_csv(output_path / "event_outcomes.csv", index=False)
     summary.to_csv(output_path / "event_summary.csv", index=False)
     folds.to_csv(output_path / "fold_definitions.csv", index=False)
     cost_sensitivity.to_csv(output_path / "cost_sensitivity.csv", index=False)
+    event_counts_by_symbol.to_csv(
+        output_path / "semantic_event_counts_by_symbol.csv",
+        index=False,
+    )
+    event_counts.to_csv(output_path / "semantic_event_counts.csv", index=False)
     (output_path / "config_snapshot.json").write_text(
         json.dumps(config, indent=2, sort_keys=True),
         encoding="utf-8",
@@ -343,5 +529,6 @@ def run_crypto_walk_forward_validation(
         test_window_weeks=test_window_weeks,
         chart_count=chart_count,
         summary=summary,
+        event_counts=event_counts,
     )
     return output_path

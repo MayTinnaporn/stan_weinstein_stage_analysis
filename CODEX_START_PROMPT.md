@@ -20,16 +20,16 @@ Do not redesign them from scratch or assume their thresholds should match.
 
 ## Current priority
 
-The frozen cryptocurrency baseline on BTC/USDT, ETH/USDT, SOL/USDT, and
-XRP/USDT has completed visual and forward-return review. Read
-`docs/TRANSITION_AUDIT.md` before changing event semantics. Do not optimize
-numeric thresholds yet.
+The frozen cryptocurrency baseline and episode-aware comparison on BTC/USDT,
+ETH/USDT, SOL/USDT, and XRP/USDT are complete. Read
+`docs/TRANSITION_AUDIT.md` and `docs/SEMANTIC_COMPARISON.md` before changing
+event semantics. Do not optimize numeric thresholds yet.
 
 The next implementation milestone is:
 
-1. explicit market-stage episode identity and re-arm semantics,
-2. diagnostic transition charts with volume, extension, Stage, and RS evidence,
-3. a frozen four-asset comparison of candidate, confirmed, and continuation events,
+1. causal base-quality diagnostics for Stage 2A,
+2. a frozen four-asset comparison of base-resolution hypotheses,
+3. continued out-of-sample evaluation of the Stage 4A episode labels,
 4. CoinGecko point-in-time top-40 acquisition and symbol mapping,
 5. point-in-time S&P 500 membership acquisition,
 6. notification state and delivery after event semantics are accepted,

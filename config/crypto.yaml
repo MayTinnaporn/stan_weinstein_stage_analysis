@@ -21,6 +21,15 @@ classifier:
   ma_slope_threshold: 0.01
   stage2a_min_volume_ratio: 1.30
 
+transition_semantics:
+  # Experimental parallel labels; these do not replace V0 events.
+  stage2_rearm_stages:
+    - 1
+    - 4
+  stage4_rearm_stages:
+    - 2
+    - 3
+
 research:
   benchmark_symbol: "BTC/USDT"
   initial_symbols:

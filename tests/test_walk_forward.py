@@ -85,6 +85,32 @@ def test_walk_forward_folds_and_summary_are_chronological():
     assert stage4a["DirectionalSuccessProbability"] == 0.0
 
 
+def test_directional_success_recognizes_parallel_stage4_events():
+    outcomes = calculate_walk_forward_event_outcomes(
+        make_analysis().assign(
+            Stage4A_Confirmed_Event=[
+                False,
+                False,
+                True,
+                False,
+                False,
+                False,
+                False,
+                False,
+            ]
+        ),
+        symbol="BTC/USDT",
+        horizons=[1],
+        min_history_weeks=2,
+        test_window_weeks=3,
+        event_columns=["Stage4A_Confirmed_Event"],
+    )
+    summary = summarize_walk_forward_outcomes(outcomes)
+    all_folds = summary.loc[summary["Fold"] == "ALL"].iloc[0]
+
+    assert all_folds["DirectionalSuccessProbability"] == 0.0
+
+
 def test_crypto_validation_writes_reproducible_report(tmp_path):
     config = {"research": {"forward_return_horizons": [1, 2]}}
     crypto_directory = tmp_path / "run" / "crypto"
@@ -118,6 +144,8 @@ def test_crypto_validation_writes_reproducible_report(tmp_path):
         "config_snapshot.json",
         "validation_manifest.json",
         "validation_report.md",
+        "semantic_event_counts.csv",
+        "semantic_event_counts_by_symbol.csv",
     }
     assert expected.issubset({path.name for path in output.iterdir()})
     report = (output / "validation_report.md").read_text(encoding="utf-8")

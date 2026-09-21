@@ -12,6 +12,7 @@ from crypto.classifier import classify_crypto_stage, detect_stage2a, detect_stag
 from crypto.data_loader import fetch_daily_ohlcv
 from crypto.features import add_stage_features
 from crypto.preprocessing import daily_to_weekly
+from crypto.transitions import add_crypto_transition_semantics
 
 logger = logging.getLogger(__name__)
 
@@ -62,6 +63,12 @@ def build_crypto_analysis(
 
     result = detect_stage4a(result)
     result = add_transition_events(result)
+    semantics_cfg = config.get("transition_semantics", {})
+    result = add_crypto_transition_semantics(
+        result,
+        stage2_rearm_stages=semantics_cfg.get("stage2_rearm_stages", (1, 4)),
+        stage4_rearm_stages=semantics_cfg.get("stage4_rearm_stages", (2, 3)),
+    )
 
     return result
 

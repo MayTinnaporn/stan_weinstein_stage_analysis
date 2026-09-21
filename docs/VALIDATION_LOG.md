@@ -84,3 +84,18 @@ universe.
 That review is complete. See `docs/TRANSITION_AUDIT.md` for the all-event table,
 failure-mode taxonomy, and prioritized hypotheses. No classifier thresholds
 were changed during the audit.
+
+## 2026-09-21 — Episode-aware semantic comparison
+
+The follow-up run preserves V0 and adds parallel episode-start, continuation,
+and next-week-confirmed labels. See `docs/SEMANTIC_COMPARISON.md` for full
+definitions and results.
+
+- Stage 2A: 20 V0 events → 12 episode starts, 10 confirmations, 8 continuations.
+- Stage 4A: 17 V0 events → 9 episode starts, 7 confirmations, 8 continuations.
+- Stage 4A episode starts materially improve directional outcomes; Stage 4A
+  continuations perform poorly and should not be treated as fresh exits.
+- Stage 2A episode gating alone performs worse than V0 at 4–13 weeks.
+- Stage 2A next-week confirmation improves medians modestly, but the sample is
+  not consistent enough to approve the rule.
+- No V0 threshold or production signal behavior was changed.

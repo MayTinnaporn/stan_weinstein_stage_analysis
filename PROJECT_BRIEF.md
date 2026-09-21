@@ -347,22 +347,26 @@ validated strategy and must not evolve into live execution during this phase.
 - Research-only transition backtester
 - Frozen-rule crypto walk-forward validation reports
 - Manual audit of all 37 frozen-baseline crypto transitions
+- Parallel crypto episode-start, continuation, and next-week-confirmation labels
+- Diagnostic transition charts with volume, MA distance, Stage, and BTC RS
 - UV-managed Python environment and lockfile
 
 ## Immediate implementation milestone
 
-1. Add explicit trend-episode identity and distinguish raw candidates,
-   confirmed transitions, and continuation/re-entry events.
-2. Add volume, MA-distance, Stage, and relative-strength evidence to transition
-   charts, then repeat the frozen four-asset semantic comparison.
-3. Implement and test the CoinGecko point-in-time top-40 universe provider,
+1. Add causal base-quality diagnostics for Stage 2A, including base duration,
+   resistance age, weeks since Stage 1, prior advance, and breakout distance.
+2. Compare Stage 2A base-resolution hypotheses on the same frozen assets
+   without replacing V0 or optimizing numeric thresholds.
+3. Retain Stage 4A episode-start, confirmed, and continuation labels for future
+   out-of-sample evaluation.
+4. Implement and test the CoinGecko point-in-time top-40 universe provider,
    eligibility rules, and CoinGecko-to-Binance symbol mapping.
-4. Acquire and validate a reliable point-in-time S&P 500 membership dataset.
-5. Run transition-level forward-return and walk-forward backtests without tuning
+5. Acquire and validate a reliable point-in-time S&P 500 membership dataset.
+6. Run transition-level forward-return and walk-forward backtests without tuning
    on future data.
-6. Define notification state/idempotency and delivery only after the candidate
+7. Define notification state/idempotency and delivery only after the candidate
    semantics are accepted.
-7. Build the HTML infographic after the stored result schema stabilizes.
+8. Build the HTML infographic after the stored result schema stabilizes.
 
 Do not optimize parameters yet.
 
