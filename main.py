@@ -17,6 +17,7 @@ from crypto.validation import (
 )
 from crypto.validation import summarize_forward_returns as summarize_crypto_returns
 from crypto.visualization import plot_stage_analysis as plot_crypto_stage
+from crypto.walk_forward import run_crypto_walk_forward_validation
 from stocks.batch import run_stock_batch
 from stocks.pipeline import analyze_stock
 from stocks.validation import (
@@ -73,6 +74,20 @@ def parse_args() -> argparse.Namespace:
     backtest_parser.add_argument("--entry-column", default="Stage2A_Event")
     backtest_parser.add_argument("--exit-column", default="Stage4A_Event")
 
+    validation_parser = subparsers.add_parser("crypto-validate")
+    validation_parser.add_argument("--run-dir", required=True)
+    validation_parser.add_argument("--config", default="config/crypto.yaml")
+    validation_parser.add_argument("--output-dir", default=None)
+    validation_parser.add_argument("--min-history-weeks", type=int, default=104)
+    validation_parser.add_argument("--test-window-weeks", type=int, default=52)
+    validation_parser.add_argument(
+        "--cost-bps-per-side",
+        type=float,
+        nargs="+",
+        default=[0.0, 10.0, 25.0],
+    )
+    validation_parser.add_argument("--chart-window-weeks", type=int, default=13)
+
     return parser.parse_args()
 
 
@@ -102,6 +117,20 @@ def main() -> None:
         summary.rename("Value").to_csv(summary_path, header=True)
         print(f"Saved: {trades_path}")
         print(f"Saved: {summary_path}")
+        return
+
+    if args.asset_type == "crypto-validate":
+        config = load_yaml_config(args.config)
+        validation_directory = run_crypto_walk_forward_validation(
+            args.run_dir,
+            config,
+            output_directory=args.output_dir,
+            min_history_weeks=args.min_history_weeks,
+            test_window_weeks=args.test_window_weeks,
+            cost_bps_per_side=tuple(args.cost_bps_per_side),
+            chart_window_weeks=args.chart_window_weeks,
+        )
+        print(f"Saved crypto walk-forward validation: {validation_directory}")
         return
 
     if args.asset_type in {"crypto-batch", "stock-batch"}:

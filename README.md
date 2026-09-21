@@ -136,6 +136,32 @@ uv run python main.py backtest \
 
 This remains a research tool, not a live trading or position-sizing system.
 
+## Crypto Walk-Forward Validation
+
+Validate a persisted crypto batch without changing classifier thresholds:
+
+```bash
+uv run python main.py crypto-validate \
+  --run-dir outputs/runs/20260921T010000Z \
+  --min-history-weeks 104 \
+  --test-window-weeks 52 \
+  --cost-bps-per-side 0 10 25
+```
+
+The command verifies that `config/crypto.yaml` matches the batch configuration
+hash, then writes:
+
+- event-level 4/8/13/26-week return, MFE, MAE, and censoring data,
+- per-fold and all-fold summaries,
+- Stage 2A-entry/Stage 4A-exit cost sensitivity,
+- fold definitions, source hashes, and the frozen configuration,
+- focused charts around every transition,
+- a Markdown baseline report.
+
+By default, results are saved under the batch's
+`crypto/walk_forward_validation/` directory. The folds are chronological
+evaluation blocks; the rules are not fitted or tuned inside them.
+
 ## Tests
 
 ```bash

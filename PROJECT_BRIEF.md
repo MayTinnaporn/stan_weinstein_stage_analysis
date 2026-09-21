@@ -345,6 +345,7 @@ validated strategy and must not evolve into live execution during this phase.
 - Reproducible as-of batch runs with persisted inputs, outputs, and configuration hash
 - Point-in-time CSV universe support
 - Research-only transition backtester
+- Frozen-rule crypto walk-forward validation reports
 - UV-managed Python environment and lockfile
 
 ## Immediate implementation milestone

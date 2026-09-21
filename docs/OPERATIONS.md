@@ -91,6 +91,7 @@ version, and new versus continuing candidates.
 | Stage 1–4 and 2A/4A events | Implemented |
 | Forward-return summaries | Implemented |
 | Research transition backtest | Implemented |
+| Frozen-rule crypto walk-forward report | Implemented |
 | Live CoinGecko top-40 provider | Pending |
 | Historical S&P 500 membership feed | Pending |
 | Monday scheduler | Pending |
@@ -115,6 +116,19 @@ uv run python main.py stock-batch \
 
 Use `--as-of` for every recorded validation run. Review `failures.csv` and the
 universe snapshot before interpreting signals.
+
+After a successful crypto batch, generate the frozen baseline report:
+
+```bash
+uv run python main.py crypto-validate \
+  --run-dir outputs/runs/20260921T010000Z \
+  --min-history-weeks 104 \
+  --test-window-weeks 52 \
+  --cost-bps-per-side 0 10 25
+```
+
+Do not change classifier thresholds between the batch and its validation. The
+command rejects a mismatched configuration hash.
 
 ## Failure policy
 

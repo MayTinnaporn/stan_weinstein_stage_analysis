@@ -57,6 +57,8 @@ def test_analysis_and_batch_snapshots_are_persisted(tmp_path):
 
     metadata = json.loads((batch_directory / "run_metadata.json").read_text())
     assert metadata["signal_count"] == 1
+    snapshot = json.loads((batch_directory / "config_snapshot.json").read_text())
+    assert snapshot == config
 
 
 def test_run_directories_are_versioned_instead_of_overwritten(tmp_path):

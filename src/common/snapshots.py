@@ -33,7 +33,8 @@ def _safe_symbol(symbol: str) -> str:
     return symbol.replace("/", "_").replace(":", "_")
 
 
-def _config_hash(config: dict[str, Any]) -> str:
+def config_hash(config: dict[str, Any]) -> str:
+    """Return the stable SHA-256 digest used in persisted run metadata."""
     payload = json.dumps(config, sort_keys=True, separators=(",", ":")).encode()
     return hashlib.sha256(payload).hexdigest()
 
@@ -77,7 +78,7 @@ def save_analysis_bundle(
         "symbol": bundle.symbol,
         "as_of": bundle.as_of.isoformat(),
         "universe": universe_name,
-        "config_sha256": _config_hash(config),
+        "config_sha256": config_hash(config),
         "last_complete_week": (
             bundle.weekly.index.max().isoformat() if not bundle.weekly.empty else None
         ),
@@ -114,9 +115,13 @@ def save_batch_run(
         "success_count": len(result.latest_results),
         "failure_count": len(result.failures),
         "signal_count": len(result.signals),
-        "config_sha256": _config_hash(config),
+        "config_sha256": config_hash(config),
     }
     (run_directory / "run_metadata.json").write_text(
         json.dumps(metadata, indent=2, sort_keys=True),
+        encoding="utf-8",
+    )
+    (run_directory / "config_snapshot.json").write_text(
+        json.dumps(config, indent=2, sort_keys=True),
         encoding="utf-8",
     )

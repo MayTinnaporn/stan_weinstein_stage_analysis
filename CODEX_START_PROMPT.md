@@ -15,6 +15,7 @@ Do not redesign them from scratch or assume their thresholds should match.
 - reproducible as-of batch snapshots,
 - static and CSV point-in-time universe providers,
 - a research-only Stage 2A-entry/Stage 4A-exit backtester,
+- a frozen-rule crypto walk-forward validation report with transition charts,
 - UV project metadata and committed lockfile.
 
 ## Current priority
