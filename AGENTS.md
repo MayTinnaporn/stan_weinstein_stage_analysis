@@ -8,6 +8,11 @@ Before making architectural or modeling decisions, read `PROJECT_BRIEF.md` and t
 
 Both V0 implementations exist, but the first active validation priority is still the cryptocurrency system.
 
+The long-term operating target is a Monday-morning scan of point-in-time S&P
+500 constituents and the eligible top 40 cryptocurrencies, followed by
+notification of newly entered Stage 2A and Stage 4A states. Notifications and
+the HTML infographic are not implemented yet and must wait for validation.
+
 Initial crypto assets:
 - BTC/USDT
 - ETH/USDT
@@ -34,7 +39,8 @@ Do not optimize either system until visual validation has been completed.
 - Never calculate support/resistance using information unavailable at that historical point.
 - Do not treat incomplete weekly candles as completed observations.
 - Keep experimental thresholds configurable.
-- Do not turn either Stage classifier into a trading strategy yet.
+- Keep the current transition backtester research-only; do not turn either
+  classifier into a live trading or portfolio-management system.
 - Do not add anomaly detection yet.
 - Do not silently change research assumptions from `PROJECT_BRIEF.md`.
 - Do not assume stock and crypto parameters should match.
@@ -70,6 +76,14 @@ Use UV for Python and dependency management:
 - use `uv sync` to create/update the environment,
 - use `uv run` for project commands,
 - use `uv add` and `uv remove` instead of editing a separate requirements file.
+
+Data-source boundaries:
+
+- Yahoo Finance through `yfinance` supplies initial stock OHLCV.
+- CoinGecko supplies point-in-time crypto market-cap rankings.
+- Binance spot through CCXT supplies venue-specific crypto OHLCV.
+- Historical S&P 500 and crypto tests require point-in-time membership.
+- Persist resolved universes and never silently substitute data providers.
 
 Add tests for calculations where mistakes could materially affect research conclusions.
 

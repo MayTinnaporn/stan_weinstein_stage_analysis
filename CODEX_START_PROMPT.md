@@ -1,66 +1,55 @@
-# Initial Codex Handoff Prompt
+# Codex Handoff Prompt
 
-Please read `AGENTS.md` and `PROJECT_BRIEF.md` first.
+Read `AGENTS.md`, `PROJECT_BRIEF.md`, `docs/DATA_SOURCES.md`, and
+`docs/OPERATIONS.md` before changing architecture or model assumptions.
 
-This repository already contains **both V0 implementations**:
+This repository already contains separate cryptocurrency and stock V0 engines.
+Do not redesign them from scratch or assume their thresholds should match.
 
-- Cryptocurrency Stage Analysis
-- Stock Stage Analysis
+## Implemented
 
-Do **not** redesign the project from scratch.
+- crypto and stock daily-data loaders and weekly aggregation,
+- configurable feature calculation and Stage 1–4 classification,
+- Stage 2A/4A candidate and rising-edge event columns,
+- plotting and forward-return validation,
+- reproducible as-of batch snapshots,
+- static and CSV point-in-time universe providers,
+- a research-only Stage 2A-entry/Stage 4A-exit backtester,
+- UV project metadata and committed lockfile.
 
-## First priority: Crypto review
+## Current priority
 
-Review:
-- `src/crypto/data_loader.py`
-- `src/crypto/preprocessing.py`
-- `src/crypto/features.py`
-- `src/crypto/classifier.py`
-- `src/crypto/pipeline.py`
-- `src/crypto/validation.py`
-- `src/crypto/visualization.py`
+Validate the cryptocurrency engine first on BTC/USDT, ETH/USDT, SOL/USDT, and
+XRP/USDT. Do not optimize thresholds before visual and forward-return validation.
 
-Check:
-1. correctness,
-2. look-ahead bias/data leakage,
-3. Monday-Sunday UTC aggregation,
-4. incomplete-week handling,
-5. SMA30, ATR14, support/resistance, volume ratio and BTC-relative strength,
-6. Stage 1/2/3/4 logic,
-7. Stage 2A/4A logic,
-8. configuration separation,
-9. tests.
+The next implementation milestone is:
 
-Initial crypto universe:
-- BTC/USDT
-- ETH/USDT
-- SOL/USDT
-- XRP/USDT
+1. CoinGecko point-in-time top-40 universe acquisition,
+2. explicit eligibility filtering and CoinGecko ID ↔ Binance pair mapping,
+3. point-in-time S&P 500 membership acquisition,
+4. walk-forward transition validation,
+5. notification state and delivery after event semantics are accepted,
+6. the HTML infographic after the result schema stabilizes.
 
-## Stock V0 is already present
+Do not describe dynamic top-40 selection, S&P membership acquisition,
+scheduling, notifications, or the infographic as implemented until the code and
+tests exist.
 
-Do not delete or redesign it. The stock implementation includes:
-- yfinance adjusted OHLCV,
-- Friday-ending weekly aggregation,
-- 30-week SMA,
-- ATR14,
-- 26-week support/resistance,
-- volume ratio,
-- Mansfield RS vs market benchmark,
-- Mansfield RS vs optional sector benchmark,
-- Stage 1/2/3/4,
-- Stage 2A/4A,
-- plotting and forward-return validation.
+## Required safeguards
 
-Stock files live under `src/stocks/`.
+- Never use incomplete weekly candles.
+- Never use current-week data in historical support/resistance.
+- Never project today's constituents backward in a backtest.
+- Keep source provenance and resolved universes with every batch run.
+- Keep the backtester research-only; do not add live execution or position sizing.
+- Keep all thresholds configurable and stock/crypto settings independent.
 
-The stock implementation should be reviewed only after the crypto V0 has been visually validated, unless explicitly instructed otherwise.
+## Development commands
 
-Do **not** yet:
-- optimize thresholds,
-- implement trading entry/exit rules,
-- add anomaly detection,
-- implement ML/HMM,
-- build live trading.
+```bash
+uv sync --frozen
+uv run --frozen pytest -q
+uv run --frozen ruff check src tests main.py
+```
 
-The purpose of the first iteration is visual validation, not parameter optimization.
+Use `uv add` and `uv remove` for dependency changes and commit `uv.lock`.

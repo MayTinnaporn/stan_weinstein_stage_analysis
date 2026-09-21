@@ -11,7 +11,18 @@ The project will contain two separately calibrated systems:
 
 The two systems share the same conceptual framework but must **not** assume that parameters, thresholds, benchmarks, volume behavior, or market structure are interchangeable.
 
-The initial goal is **not** to build a trading strategy. The first goal is to determine whether Weinstein-style Stage Analysis can be converted into a reproducible quantitative market-state classifier.
+The operational goal is a weekly research system that, every Monday morning:
+
+1. resolves the point-in-time S&P 500 and eligible top-40 cryptocurrency universes,
+2. downloads daily OHLCV and builds completed weekly bars,
+3. classifies Stage 1–4 and detects new Stage 2A/4A transitions,
+4. persists reproducible evidence for each run, and
+5. eventually notifies the researcher of Stage 2A entry candidates and Stage 4A exit candidates.
+
+The current goal is **not** automated trading. The project is validating whether
+Weinstein-style Stage Analysis can be converted into a reproducible quantitative
+market-state classifier. Notifications and an HTML infographic come only after
+visual validation, forward-return analysis, and backtest refinement.
 
 ## 2. Core Concept
 
@@ -42,7 +53,7 @@ Relevant information includes:
 
 ## 3. Research Philosophy
 
-Do not immediately build buy/sell signals.
+Do not treat candidate events as validated buy/sell recommendations.
 
 Development should proceed in this order:
 
@@ -52,7 +63,7 @@ Development should proceed in this order:
 4. Manually inspect whether classifications make sense.
 5. Quantitatively validate forward returns by stage.
 6. Tune stage-classification methodology if necessary.
-7. Only afterward investigate trading strategies.
+7. Only afterward investigate portfolio construction or live trading strategies.
 
 Do not assume that Weinstein Stage Analysis has predictive value. Test it empirically.
 
@@ -60,7 +71,10 @@ Do not assume that Weinstein Stage Analysis has predictive value. Test it empiri
 
 ## 4.1 Data
 
-Initial data source may use CCXT.
+Use Binance spot OHLCV through CCXT for venue-specific price and volume data.
+Use CoinGecko point-in-time market-cap data to construct the weekly top-40
+candidate universe. Universe selection and OHLCV acquisition are separate
+responsibilities; see `docs/DATA_SOURCES.md`.
 
 Use daily OHLCV as the raw input and aggregate daily candles into weekly candles ourselves.
 
@@ -82,6 +96,13 @@ Initial research universe:
 - LTC
 
 Begin testing with BTC, ETH, SOL and XRP before expanding the universe.
+
+The operational universe is the top 40 eligible crypto assets by point-in-time
+market capitalization. Stablecoins, wrapped/bridged duplicates, duplicate
+liquid-staking exposure, ineligible venue pairs, and assets failing configured
+history or liquidity requirements must be excluded by a documented policy.
+Persist the input ranking, exclusions, symbol mapping, and final membership for
+every run. Never backfill historical tests using today's top-40 list.
 
 ## 4.2 Crypto Features
 
@@ -177,11 +198,17 @@ Shared utilities are acceptable, but classification thresholds and market assump
 
 ## 5.1 Stock Data
 
-Use daily adjusted market data and aggregate into weekly bars.
+Use Yahoo Finance through `yfinance` for initial research data. Download daily
+adjusted OHLCV and aggregate it into weekly bars. Yahoo Finance is suitable for
+personal research, not assumed to be a licensed production data feed.
 
 Weekly boundary: **trading week ending Friday**.
 
 Corporate actions must be handled carefully. Stock splits must not appear as artificial price collapses. Dividend adjustment methodology should be explicitly documented.
+
+The operational universe is the point-in-time S&P 500 membership on the run
+date. Historical tests must use historical membership intervals rather than
+today's constituents. Persist each resolved universe with the run artifacts.
 
 ## 5.2 Stock Features
 
@@ -284,7 +311,7 @@ For stocks also consider delisted companies, historical index membership and cor
 
 For crypto consider delisted tokens, exchange-specific history, volume fragmentation, thin liquidity, wash trading and short asset histories.
 
-# 10. Out of Scope for Initial Version
+# 10. Out of Scope During Research Validation
 
 Do **not** implement yet:
 
@@ -294,21 +321,43 @@ Do **not** implement yet:
 - Automated trading
 - Position sizing
 - Portfolio optimization
-- Entry/exit system
 - Live execution
 - Exchange API trading
+- Production notification delivery
+- Production HTML infographic
 
 Previous anomaly-detection discussions were conceptual only; no anomaly system has been implemented.
 
-# 11. Initial Development Milestone
+A small event-driven backtester is in scope as a research instrument. It may
+simulate entry on a new Stage 2A event and exit on a new Stage 4A event at the
+following weekly open, with explicit costs. This does not make the classifier a
+validated strategy and must not evolve into live execution during this phase.
 
-Milestone 1 focuses only on cryptocurrencies.
+# 11. Development Status and Immediate Milestone
 
-Build:
+## Completed foundation
 
-Daily OHLCV → weekly aggregation → feature engineering → Stage 1–4 classification → Stage 2A / Stage 4A detection → visualization
+- Separate cryptocurrency and stock V0 classifiers
+- Daily-to-weekly aggregation with incomplete-week exclusion
+- Feature calculation, Stage 1–4 labels, and Stage 2A/4A candidate flags
+- Rising-edge Stage 2A/4A event detection
+- Charts and forward-return summaries
+- Reproducible as-of batch runs with persisted inputs, outputs, and configuration hash
+- Point-in-time CSV universe support
+- Research-only transition backtester
+- UV-managed Python environment and lockfile
 
-Test first on BTC, ETH, SOL and XRP using history from approximately 2020 onward where data availability permits.
+## Immediate implementation milestone
+
+1. Finish visual and quantitative validation on BTC, ETH, SOL, and XRP.
+2. Implement and test the CoinGecko point-in-time top-40 universe provider,
+   eligibility rules, and CoinGecko-to-Binance symbol mapping.
+3. Acquire and validate a reliable point-in-time S&P 500 membership dataset.
+4. Run transition-level forward-return and walk-forward backtests without tuning
+   on future data.
+5. Define notification state/idempotency and delivery only after the candidate
+   semantics are accepted.
+6. Build the HTML infographic after the stored result schema stabilizes.
 
 Do not optimize parameters yet.
 

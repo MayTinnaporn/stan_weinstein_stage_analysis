@@ -35,6 +35,25 @@ The two systems share the same conceptual framework but are intentionally calibr
 
 Both classifiers are **research hypotheses**, not trading strategies.
 
+## Current Status
+
+Implemented now:
+
+- both V0 classifiers and visualizations,
+- reproducible single-asset and batch runs,
+- static and CSV point-in-time universe inputs,
+- forward-return summaries and a research-only transition backtester.
+
+Still to implement:
+
+- live CoinGecko top-40 universe resolution and symbol eligibility mapping,
+- an authoritative historical S&P 500 membership feed,
+- Monday scheduling and idempotent notifications,
+- the HTML infographic.
+
+See `PROJECT_BRIEF.md` for research assumptions and `docs/OPERATIONS.md` for the
+target weekly workflow and implementation boundary.
+
 ## Setup
 
 ```bash
@@ -99,6 +118,10 @@ Static symbol lists are intended for initial visual validation only. Historical
 testing of today's S&P 500 or today's top-40 cryptocurrencies would introduce
 survivorship or selection bias.
 
+The intended production cadence is Monday after the crypto week has closed and
+source data is available. The recommended default is `01:00 UTC` (`08:00
+Asia/Bangkok`). Scheduling itself is not yet included in the repository.
+
 ## Transition Backtest
 
 Stage 2A/4A candidates are converted into rising-edge event columns so a
@@ -128,8 +151,13 @@ uv run pytest -q
 - Crypto universe: CoinGecko is the recommended source for point-in-time
   market capitalization and the weekly top-40 membership snapshot.
 
-See `docs/DATA_SOURCES.md` for the separation between universe selection and
-OHLCV acquisition, historical-data limitations, and fallback policy.
+See:
+
+- `docs/DATA_SOURCES.md` for universe/OHLCV separation, historical-data
+  limitations, and fallback policy.
+- `docs/OPERATIONS.md` for the Monday workflow, artifacts, failure handling,
+  and notification boundary.
+- `docs/VALIDATION_LOG.md` for recorded visual and mechanical checks.
 
 ## Codex
 

@@ -1,5 +1,11 @@
 # Data Source Policy
 
+The repository currently implements Yahoo Finance stock OHLCV and
+Binance-through-CCXT crypto OHLCV. The live CoinGecko universe provider,
+eligibility mapping, and historical S&P 500 membership acquisition are planned
+work; static symbol lists and point-in-time CSV files are the current universe
+inputs.
+
 ## Stocks
 
 Research OHLCV is acquired from Yahoo Finance through `yfinance` with adjusted
