@@ -3,6 +3,7 @@ exchange:
   quote_currency: USDT
 
 data:
+  provider: binance_via_ccxt
   start: "2020-01-01"
   week_rule: "W-SUN"
 

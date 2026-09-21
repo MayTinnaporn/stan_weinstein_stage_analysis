@@ -38,28 +38,27 @@ Both classifiers are **research hypotheses**, not trading strategies.
 ## Setup
 
 ```bash
-python -m venv .venv
-source .venv/bin/activate      # macOS/Linux
-# .venv\Scripts\activate     # Windows
-
-pip install -e ".[dev]"
+uv sync
 ```
+
+UV manages the Python version, virtual environment, dependencies, and the
+committed `uv.lock`. Add or remove packages with `uv add` and `uv remove`.
 
 ## Run Crypto
 
 ```bash
-python main.py crypto --symbol BTC/USDT
-python main.py crypto --symbol ETH/USDT
-python main.py crypto --symbol SOL/USDT
-python main.py crypto --symbol XRP/USDT
+uv run python main.py crypto --symbol BTC/USDT
+uv run python main.py crypto --symbol ETH/USDT
+uv run python main.py crypto --symbol SOL/USDT
+uv run python main.py crypto --symbol XRP/USDT
 ```
 
 ## Run Stocks
 
 ```bash
-python main.py stock --symbol AAPL
-python main.py stock --symbol NVDA --sector SMH
-python main.py stock --symbol MSFT --sector XLK
+uv run python main.py stock --symbol AAPL
+uv run python main.py stock --symbol NVDA --sector SMH
+uv run python main.py stock --symbol MSFT --sector XLK
 ```
 
 Outputs are written under `outputs/`.
@@ -71,11 +70,11 @@ persist raw daily data, completed weekly bars, analysis, transition events,
 the universe snapshot and configuration hash under a timestamped directory.
 
 ```bash
-python main.py crypto-batch \
+uv run python main.py crypto-batch \
   --as-of 2026-09-21T01:00:00Z \
   --symbols BTC/USDT ETH/USDT SOL/USDT XRP/USDT
 
-python main.py stock-batch \
+uv run python main.py stock-batch \
   --as-of 2026-09-21T01:00:00Z \
   --symbols AAPL MSFT NVDA AMZN
 ```
@@ -90,7 +89,7 @@ OLD_MEMBER,2010-01-01,2018-06-01
 ```
 
 ```bash
-python main.py stock-batch \
+uv run python main.py stock-batch \
   --as-of 2017-01-09T01:00:00Z \
   --universe-name sp500-history \
   --universe-csv data/sp500_membership.csv
@@ -107,7 +106,7 @@ multiweek candidate produces only one event. The initial long-only backtester
 executes each event at the following weekly open and supports per-side costs.
 
 ```bash
-python main.py backtest \
+uv run python main.py backtest \
   --input outputs/runs/20260921T010000Z/crypto/ETH_USDT/analysis.csv \
   --cost-bps-per-side 10
 ```
@@ -117,8 +116,20 @@ This remains a research tool, not a live trading or position-sizing system.
 ## Tests
 
 ```bash
-pytest -q
+uv run pytest -q
 ```
+
+## Data Sources
+
+- Stocks: Yahoo Finance through `yfinance`, with adjusted OHLC enabled by
+  default to protect the research from artificial split gaps.
+- Crypto OHLCV: Binance spot markets through CCXT. These candles and volumes
+  are exchange-specific, which keeps the backtest tied to a tradable venue.
+- Crypto universe: CoinGecko is the recommended source for point-in-time
+  market capitalization and the weekly top-40 membership snapshot.
+
+See `docs/DATA_SOURCES.md` for the separation between universe selection and
+OHLCV acquisition, historical-data limitations, and fallback policy.
 
 ## Codex
 

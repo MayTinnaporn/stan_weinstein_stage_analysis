@@ -64,6 +64,13 @@ Use Python and prefer:
 - configuration files
 - testable pure functions where practical
 
+Use UV for Python and dependency management:
+- keep dependencies in `pyproject.toml`,
+- commit `uv.lock`,
+- use `uv sync` to create/update the environment,
+- use `uv run` for project commands,
+- use `uv add` and `uv remove` instead of editing a separate requirements file.
+
 Add tests for calculations where mistakes could materially affect research conclusions.
 
 ## Validation

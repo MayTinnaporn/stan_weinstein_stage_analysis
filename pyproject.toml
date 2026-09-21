@@ -16,10 +16,11 @@ dependencies = [
     "yfinance>=0.2.50",
 ]
 
-[project.optional-dependencies]
+[dependency-groups]
 dev = [
     "pytest>=8.0",
     "jupyter>=1.0",
+    "ruff>=0.13",
 ]
 
 [tool.setuptools.packages.find]

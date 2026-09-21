@@ -1,4 +1,5 @@
 data:
+  provider: yahoo_finance_via_yfinance
   start: "2010-01-01"
   auto_adjust: true
   week_rule: "W-FRI"

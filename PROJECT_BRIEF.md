@@ -326,3 +326,12 @@ Prefer:
 - Explicit protection against look-ahead bias
 
 Functions should have a single clear responsibility. Research assumptions should be documented rather than silently embedded in code.
+
+# 13. Tooling and Data-Source Decisions
+
+- Use UV for Python version, virtual environment, dependency, and lockfile management.
+- Use Yahoo Finance through `yfinance` for stock research OHLCV during the initial research phase.
+- Use Binance spot OHLCV through CCXT for crypto price and venue-specific volume data.
+- Use CoinGecko point-in-time market-cap data to define the weekly top-40 cryptocurrency universe.
+- Persist each weekly universe snapshot; do not reconstruct historical membership from today's rankings.
+- Keep universe selection separate from tradable OHLCV acquisition.
