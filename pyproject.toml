@@ -1,0 +1,31 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "market-stage-analysis"
+version = "0.2.0"
+description = "Research implementation of Stan Weinstein-style Stage Analysis for crypto and stocks"
+requires-python = ">=3.10"
+dependencies = [
+    "ccxt>=4.4",
+    "matplotlib>=3.8",
+    "numpy>=1.26",
+    "pandas>=2.1",
+    "PyYAML>=6.0",
+    "yfinance>=0.2.50",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "jupyter>=1.0",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
+addopts = "-q"

@@ -1,0 +1,34 @@
+exchange:
+  id: binance
+  quote_currency: USDT
+
+data:
+  start: "2020-01-01"
+  week_rule: "W-SUN"
+
+features:
+  ma_period: 30
+  ma_slope_period: 4
+  atr_period: 14
+  structure_lookback: 26
+  volume_lookback: 20
+  momentum_lookback: 26
+  rs_lookback: 52
+  rs_slope_period: 4
+
+classifier:
+  ma_slope_threshold: 0.01
+  stage2a_min_volume_ratio: 1.30
+
+research:
+  benchmark_symbol: "BTC/USDT"
+  initial_symbols:
+    - "BTC/USDT"
+    - "ETH/USDT"
+    - "SOL/USDT"
+    - "XRP/USDT"
+  forward_return_horizons:
+    - 4
+    - 8
+    - 13
+    - 26
