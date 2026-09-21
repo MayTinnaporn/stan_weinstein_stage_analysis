@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import pandas as pd
 
-
 REQUIRED_OHLCV_COLUMNS = {"Open", "High", "Low", "Close", "Volume"}
 
 
@@ -35,10 +34,16 @@ def daily_to_weekly(
 
     W-SUN produces Monday-through-Sunday weeks labeled by Sunday.
 
-    If drop_incomplete_week is True, the final weekly bar is retained only
-    when the input includes the Sunday corresponding to that weekly label.
+    When ``drop_incomplete_week`` is true, boundary weeks with fewer than
+    seven distinct UTC dates are removed. An incomplete week inside the data
+    range is treated as a data-quality failure rather than silently skipped.
     """
     validate_ohlcv(df)
+
+    distinct_dates = pd.Series(
+        df.index.normalize(),
+        index=df.index,
+    ).resample(week_rule).nunique()
 
     weekly = (
         df.resample(week_rule)
@@ -55,7 +60,14 @@ def daily_to_weekly(
     )
 
     if drop_incomplete_week and not weekly.empty:
-        last_daily_date = df.index.max().normalize()
-        weekly = weekly.loc[weekly.index.normalize() <= last_daily_date]
+        incomplete = distinct_dates.reindex(weekly.index, fill_value=0) != 7
+        internal_incomplete = incomplete.iloc[1:-1]
+
+        if internal_incomplete.any():
+            labels = internal_incomplete.index[internal_incomplete]
+            formatted = ", ".join(label.date().isoformat() for label in labels)
+            raise ValueError(f"Incomplete internal crypto week(s): {formatted}")
+
+        weekly = weekly.loc[~incomplete]
 
     return weekly

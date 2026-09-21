@@ -1,4 +1,5 @@
 import pandas as pd
+import pytest
 
 from crypto.preprocessing import daily_to_weekly
 
@@ -37,3 +38,18 @@ def test_incomplete_final_week_is_removed():
     df = make_daily("2026-01-05", 6)
     weekly = daily_to_weekly(df)
     assert weekly.empty
+
+
+def test_incomplete_first_week_is_removed():
+    df = make_daily("2026-01-07", 12)
+    weekly = daily_to_weekly(df)
+
+    assert list(weekly.index) == [pd.Timestamp("2026-01-18", tz="UTC")]
+
+
+def test_incomplete_internal_week_raises_data_quality_error():
+    df = make_daily("2026-01-05", 21)
+    df = df.drop(pd.Timestamp("2026-01-14", tz="UTC"))
+
+    with pytest.raises(ValueError, match="Incomplete internal crypto week"):
+        daily_to_weekly(df)

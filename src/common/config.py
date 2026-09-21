@@ -16,6 +16,6 @@ def load_yaml_config(path: str | Path) -> dict[str, Any]:
         config = yaml.safe_load(f)
 
     if not isinstance(config, dict):
-        raise ValueError(f"Config must contain a mapping at top level: {config_path}")
+        raise TypeError(f"Config must contain a mapping at top level: {config_path}")
 
     return config

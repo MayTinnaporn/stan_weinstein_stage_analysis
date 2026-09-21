@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import pandas as pd
 
-
 REQUIRED_OHLCV_COLUMNS = {"Open", "High", "Low", "Close", "Volume"}
 
 
@@ -28,13 +27,17 @@ def validate_ohlcv(df: pd.DataFrame) -> None:
 def daily_to_weekly(
     df: pd.DataFrame,
     week_rule: str = "W-FRI",
+    *,
+    as_of: str | pd.Timestamp | None = None,
+    drop_incomplete_week: bool = True,
 ) -> pd.DataFrame:
     """
     Aggregate daily stock OHLCV into trading weeks ending Friday.
 
     Unlike crypto, a stock week may legitimately contain fewer than five
-    sessions because of exchange holidays. Therefore the function does not
-    require five observations per week.
+    sessions because of exchange holidays. A week is conservatively treated
+    as complete only after its Friday label has passed. ``as_of`` should be
+    supplied by reproducible research runs.
     """
     validate_ohlcv(df)
 
@@ -52,12 +55,28 @@ def daily_to_weekly(
         .dropna(subset=["Open", "High", "Low", "Close"])
     )
 
-    # If the most recent daily session belongs to a future Friday label,
-    # that resampled bar is a partial current trading week. Remove it.
-    if not weekly.empty:
-        last_daily = df.index.max().normalize()
-        current_week_label = weekly.index.max().normalize()
-        if current_week_label > last_daily:
-            weekly = weekly.iloc[:-1]
+    if drop_incomplete_week and not weekly.empty:
+        if as_of is None:
+            as_of_ts = pd.Timestamp.now(tz="UTC")
+        else:
+            as_of_ts = pd.Timestamp(as_of)
+            if as_of_ts.tzinfo is None:
+                as_of_ts = as_of_ts.tz_localize("UTC")
+            else:
+                as_of_ts = as_of_ts.tz_convert("UTC")
+
+        completed = weekly.index + pd.Timedelta(days=1) <= as_of_ts
+        weekly = weekly.loc[completed]
+
+        # A newly listed security or midweek requested start can create a
+        # partial first bar. Monday and Tuesday starts are retained because a
+        # Monday exchange holiday is legitimate; Wednesday-or-later starts
+        # are conservatively removed.
+        if not weekly.empty and df.index.min().weekday() >= 2:
+            days_until_friday = (4 - df.index.min().weekday()) % 7
+            first_label = (
+                df.index.min().normalize() + pd.Timedelta(days=days_until_friday)
+            )
+            weekly = weekly.loc[weekly.index != first_label]
 
     return weekly

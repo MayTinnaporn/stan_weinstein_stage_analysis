@@ -64,6 +64,56 @@ python main.py stock --symbol MSFT --sector XLK
 
 Outputs are written under `outputs/`.
 
+## Reproducible Batch Runs
+
+Every research run can be pinned to an explicit UTC timestamp. Batch runs
+persist raw daily data, completed weekly bars, analysis, transition events,
+the universe snapshot and configuration hash under a timestamped directory.
+
+```bash
+python main.py crypto-batch \
+  --as-of 2026-09-21T01:00:00Z \
+  --symbols BTC/USDT ETH/USDT SOL/USDT XRP/USDT
+
+python main.py stock-batch \
+  --as-of 2026-09-21T01:00:00Z \
+  --symbols AAPL MSFT NVDA AMZN
+```
+
+For backtests, provide a point-in-time membership CSV rather than today's
+constituents:
+
+```csv
+symbol,effective_from,effective_to
+AAPL,1982-11-30,
+OLD_MEMBER,2010-01-01,2018-06-01
+```
+
+```bash
+python main.py stock-batch \
+  --as-of 2017-01-09T01:00:00Z \
+  --universe-name sp500-history \
+  --universe-csv data/sp500_membership.csv
+```
+
+Static symbol lists are intended for initial visual validation only. Historical
+testing of today's S&P 500 or today's top-40 cryptocurrencies would introduce
+survivorship or selection bias.
+
+## Transition Backtest
+
+Stage 2A/4A candidates are converted into rising-edge event columns so a
+multiweek candidate produces only one event. The initial long-only backtester
+executes each event at the following weekly open and supports per-side costs.
+
+```bash
+python main.py backtest \
+  --input outputs/runs/20260921T010000Z/crypto/ETH_USDT/analysis.csv \
+  --cost-bps-per-side 10
+```
+
+This remains a research tool, not a live trading or position-sizing system.
+
 ## Tests
 
 ```bash
