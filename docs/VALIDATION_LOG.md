@@ -99,3 +99,19 @@ definitions and results.
 - Stage 2A next-week confirmation improves medians modestly, but the sample is
   not consistent enough to approve the rule.
 - No V0 threshold or production signal behavior was changed.
+
+## 2026-09-21 — Stage 2A base-quality comparison
+
+The follow-up run adds causal pre-breakout diagnostics and one predeclared
+parallel hypothesis: a Stage 2A episode start with at least one Stage 1 week in
+the prior 13 completed weeks. See `docs/BASE_QUALITY_COMPARISON.md`.
+
+- Source run: `outputs/runs/20260921T010000Z-06/crypto`
+- Configuration SHA-256:
+  `4fbd9a357e4f617f177595f82313fda65ea945a053e84b68541cbb6b07e6d85a`
+- Four assets succeeded; no acquisition failures; 37 annotated charts written.
+- The recent-Stage-1 rule retained 11 of 12 episode starts, so it did not
+  meaningfully discriminate among candidates.
+- Lower prior range and volatility aligned with positive 4–13-week outcomes,
+  but the patterns were not stable at 26 weeks and samples were very small.
+- No V0 thresholds, production events, or batch signal behavior changed.

@@ -43,6 +43,49 @@ def test_resistance_excludes_current_week():
     assert out["Resistance_26w"].iloc[-1] < 9999.0
 
 
+def test_base_quality_features_exclude_current_week_from_prior_window():
+    weekly = make_weekly(40)
+    baseline = add_stage_features(
+        weekly,
+        structure_lookback=10,
+        base_quality_lookback=5,
+    )
+    weekly.iloc[-1, weekly.columns.get_loc("Close")] = 9999.0
+    weekly.iloc[-1, weekly.columns.get_loc("High")] = 10001.0
+    changed = add_stage_features(
+        weekly,
+        structure_lookback=10,
+        base_quality_lookback=5,
+    )
+
+    for column in (
+        "Prior_Base_Return",
+        "Prior_Base_Range_Pct",
+        "Prior_Base_Volatility",
+        "Resistance_Age_Weeks",
+    ):
+        assert changed[column].iloc[-1] == baseline[column].iloc[-1]
+    assert (
+        changed["Breakout_Weekly_Return"].iloc[-1]
+        != baseline["Breakout_Weekly_Return"].iloc[-1]
+    )
+
+
+def test_resistance_age_uses_most_recent_tied_high():
+    weekly = make_weekly(12)
+    weekly["High"] = 100.0
+    weekly.iloc[8, weekly.columns.get_loc("High")] = 120.0
+    weekly.iloc[10, weekly.columns.get_loc("High")] = 120.0
+
+    out = add_stage_features(
+        weekly,
+        structure_lookback=5,
+        base_quality_lookback=3,
+    )
+
+    assert out["Resistance_Age_Weeks"].iloc[11] == 1.0
+
+
 def test_altcoin_relative_strength_columns_exist():
     weekly = make_weekly()
     btc = make_weekly()

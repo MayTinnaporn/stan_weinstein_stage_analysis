@@ -50,8 +50,7 @@ def test_walk_forward_outcomes_use_later_bars_and_preserve_censoring():
     assert first["MAE"] == pytest.approx(115 / 120 - 1)
 
     censored = outcomes.loc[
-        (outcomes["EventWeek"] == analysis.index[6])
-        & (outcomes["HorizonWeeks"] == 2)
+        (outcomes["EventWeek"] == analysis.index[6]) & (outcomes["HorizonWeeks"] == 2)
     ].iloc[0]
     assert not censored["OutcomeAvailable"]
     assert pd.isna(censored["ForwardReturn"])
@@ -146,6 +145,8 @@ def test_crypto_validation_writes_reproducible_report(tmp_path):
         "validation_report.md",
         "semantic_event_counts.csv",
         "semantic_event_counts_by_symbol.csv",
+        "stage2a_base_quality_events.csv",
+        "stage2a_base_quality_feature_summary.csv",
     }
     assert expected.issubset({path.name for path in output.iterdir()})
     report = (output / "validation_report.md").read_text(encoding="utf-8")

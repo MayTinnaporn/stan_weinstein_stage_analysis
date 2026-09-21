@@ -15,12 +15,19 @@ from common.walk_forward import (
     calculate_walk_forward_event_outcomes,
     summarize_walk_forward_outcomes,
 )
+from crypto.base_quality import (
+    build_stage2a_base_quality_dataset,
+    summarize_base_quality_features,
+)
 
 COMPARISON_EVENT_COLUMNS = (
     "Stage2A_Event",
     "Stage2A_EpisodeStart_Event",
     "Stage2A_Confirmed_Event",
     "Stage2A_Continuation_Event",
+    "Stage2A_RecentStage1_Event",
+    "Stage2A_NoRecentStage1_Event",
+    "Stage2A_ConfirmedRecentStage1_Event",
     "Stage4A_Event",
     "Stage4A_EpisodeStart_Event",
     "Stage4A_Confirmed_Event",
@@ -30,7 +37,9 @@ COMPARISON_EVENT_COLUMNS = (
 
 def _resolve_crypto_directory(run_directory: str | Path) -> Path:
     candidate = Path(run_directory)
-    crypto_directory = candidate / "crypto" if (candidate / "crypto").is_dir() else candidate
+    crypto_directory = (
+        candidate / "crypto" if (candidate / "crypto").is_dir() else candidate
+    )
     if not crypto_directory.is_dir():
         raise ValueError(f"Crypto run directory does not exist: {crypto_directory}")
     return crypto_directory
@@ -87,7 +96,9 @@ def _plot_transition_windows(
 
     for event_column in event_columns:
         mask = analysis[event_column].fillna(False).astype(bool)
-        for position in [analysis.index.get_loc(index) for index in analysis.index[mask]]:
+        for position in [
+            analysis.index.get_loc(index) for index in analysis.index[mask]
+        ]:
             if position < min_history_weeks:
                 continue
             start = max(0, position - window_weeks)
@@ -178,6 +189,32 @@ def _plot_transition_windows(
                 f"{symbol} {event_column} — {event_week.date()} "
                 f"({role}, episode {episode_id})"
             )
+            if event_column == "Stage2A_Event":
+                diagnostic_parts = []
+                for column, label, format_spec in (
+                    ("Stage1_Weeks_Prior_Window", "prior Stage 1 weeks", ".0f"),
+                    ("Weeks_Since_Stage1", "weeks since Stage 1", ".0f"),
+                    ("Resistance_Age_Weeks", "resistance age", ".0f"),
+                    ("Prior_Base_Range_Pct", "prior range", ".1%"),
+                    ("Breakout_Distance_ATR", "breakout / ATR", ".2f"),
+                ):
+                    if column not in analysis.columns:
+                        continue
+                    value = analysis[column].iloc[position]
+                    if pd.notna(value):
+                        diagnostic_parts.append(
+                            f"{label}: {format(float(value), format_spec)}"
+                        )
+                if diagnostic_parts:
+                    price_ax.text(
+                        0.01,
+                        0.02,
+                        "\n".join(diagnostic_parts),
+                        transform=price_ax.transAxes,
+                        fontsize=8,
+                        verticalalignment="bottom",
+                        bbox={"facecolor": "white", "alpha": 0.8, "edgecolor": "gray"},
+                    )
             price_ax.set_ylabel("Price")
             price_ax.grid(True, alpha=0.25)
             price_ax.legend(loc="best")
@@ -292,6 +329,7 @@ def _write_report(
     chart_count: int,
     summary: pd.DataFrame,
     event_counts: pd.DataFrame,
+    base_quality_summary: pd.DataFrame,
 ) -> None:
     lines = [
         "# Crypto Walk-Forward Semantic Comparison",
@@ -331,6 +369,16 @@ def _write_report(
         "",
         *_markdown_summary_table(summary),
         "",
+        "## Stage 2A base-quality experiment",
+        "",
+        "The predeclared structural hypothesis is an episode start with at least",
+        "one Stage 1 week in the prior 13 completed weeks. Continuous diagnostics",
+        "are reported descriptively and are not used as optimized filters.",
+        "",
+        f"- Feature-summary rows: {len(base_quality_summary)}",
+        "- Event-level diagnostics: `stage2a_base_quality_events.csv`",
+        "- Success/failure feature comparison: `stage2a_base_quality_feature_summary.csv`",
+        "",
         "## Interpretation guardrails",
         "",
         "- Small event counts are descriptive evidence, not proof of an edge.",
@@ -339,8 +387,8 @@ def _write_report(
         "- Transaction-cost results are a sensitivity check, not a portfolio backtest.",
         "- Thresholds remain unchanged in this baseline report.",
         "",
-        "Inspect `event_outcomes.csv`, `event_summary.csv`, `cost_sensitivity.csv`,",
-        "`fold_definitions.csv`, and the `transition_charts/` directory before drawing",
+        "Inspect `event_outcomes.csv`, `event_summary.csv`, the base-quality CSVs,",
+        "`cost_sensitivity.csv`, `fold_definitions.csv`, and `transition_charts/` before drawing",
         "a model decision.",
         "",
     ]
@@ -374,12 +422,15 @@ def run_crypto_walk_forward_validation(
         if run_metadata_path.exists()
         else {}
     )
-    horizons = tuple(int(value) for value in config["research"]["forward_return_horizons"])
+    horizons = tuple(
+        int(value) for value in config["research"]["forward_return_horizons"]
+    )
     analysis_paths = sorted(crypto_directory.glob("*/analysis.csv"))
     if not analysis_paths:
         raise ValueError(f"No crypto analysis files found under {crypto_directory}")
 
     outcome_tables: list[pd.DataFrame] = []
+    base_quality_tables: list[pd.DataFrame] = []
     fold_tables: list[pd.DataFrame] = []
     cost_rows: list[dict[str, Any]] = []
     event_count_rows: list[dict[str, Any]] = []
@@ -405,15 +456,17 @@ def run_crypto_walk_forward_validation(
                 test_window_weeks=test_window_weeks,
             )
         )
-        outcome_tables.append(
-            calculate_walk_forward_event_outcomes(
-                analysis,
-                symbol=symbol,
-                horizons=horizons,
-                min_history_weeks=min_history_weeks,
-                test_window_weeks=test_window_weeks,
-                event_columns=comparison_columns,
-            )
+        symbol_outcomes = calculate_walk_forward_event_outcomes(
+            analysis,
+            symbol=symbol,
+            horizons=horizons,
+            min_history_weeks=min_history_weeks,
+            test_window_weeks=test_window_weeks,
+            event_columns=comparison_columns,
+        )
+        outcome_tables.append(symbol_outcomes)
+        base_quality_tables.append(
+            build_stage2a_base_quality_dataset(analysis, symbol_outcomes)
         )
 
         evaluation_data = analysis.iloc[min_history_weeks:].copy()
@@ -471,6 +524,8 @@ def run_crypto_walk_forward_validation(
             )
 
     outcomes = pd.concat(outcome_tables, ignore_index=True)
+    base_quality = pd.concat(base_quality_tables, ignore_index=True)
+    base_quality_summary = summarize_base_quality_features(base_quality)
     summary = summarize_walk_forward_outcomes(outcomes)
     if not outcomes.empty:
         pooled_outcomes = outcomes.copy()
@@ -497,6 +552,11 @@ def run_crypto_walk_forward_validation(
         index=False,
     )
     event_counts.to_csv(output_path / "semantic_event_counts.csv", index=False)
+    base_quality.to_csv(output_path / "stage2a_base_quality_events.csv", index=False)
+    base_quality_summary.to_csv(
+        output_path / "stage2a_base_quality_feature_summary.csv",
+        index=False,
+    )
     (output_path / "config_snapshot.json").write_text(
         json.dumps(config, indent=2, sort_keys=True),
         encoding="utf-8",
@@ -530,5 +590,6 @@ def run_crypto_walk_forward_validation(
         chart_count=chart_count,
         summary=summary,
         event_counts=event_counts,
+        base_quality_summary=base_quality_summary,
     )
     return output_path

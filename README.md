@@ -156,6 +156,7 @@ hash, then writes:
 - Stage 2A-entry/Stage 4A-exit cost sensitivity,
 - fold definitions, source hashes, and the frozen configuration,
 - episode-start, continuation, and next-week-confirmation counts,
+- Stage 2A event-level base-quality diagnostics and success/failure summaries,
 - focused charts around every transition,
 - a Markdown baseline report.
 
@@ -189,6 +190,8 @@ See:
   Stage 2A/4A transition windows.
 - `docs/SEMANTIC_COMPARISON.md` for the episode-start, continuation, and
   next-week-confirmation experiment.
+- `docs/BASE_QUALITY_COMPARISON.md` for the causal Stage 2A base-quality
+  experiment and decision.
 
 ## Codex
 

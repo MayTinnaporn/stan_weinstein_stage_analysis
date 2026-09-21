@@ -67,3 +67,46 @@ def test_confirmation_does_not_use_the_candidate_week_close():
     assert out.loc[1, "Stage2A_EpisodeStart_Event"]
     assert not out["Stage2A_Confirmed_Event"].any()
     assert not out["Stage2A_FailedConfirmation_Event"].any()
+
+
+def test_recent_stage1_hypothesis_uses_only_prior_weeks():
+    df = pd.DataFrame(
+        {
+            "Close": [90, 91, 92, 110, 111],
+            "Stage": [1, 1, 3, 2, 2],
+            "Resistance_26w": [100] * 5,
+            "Support_26w": [50] * 5,
+            "Stage2A": [False, False, False, True, False],
+            "Stage4A": [False] * 5,
+        }
+    )
+    out = add_crypto_transition_semantics(
+        add_transition_events(df),
+        recent_stage1_lookback_weeks=3,
+        recent_stage1_min_weeks=2,
+    )
+
+    assert out.loc[3, "Stage1_Weeks_Prior_Window"] == 2
+    assert out.loc[3, "Stage2A_RecentStage1_Event"]
+    assert out.loc[4, "Stage2A_ConfirmedRecentStage1_Event"]
+    assert out.loc[3, "Weeks_Since_Stage1"] == 2
+
+
+def test_episode_without_recent_stage1_is_labeled_in_parallel():
+    df = pd.DataFrame(
+        {
+            "Close": [90, 91, 92, 110],
+            "Stage": [3, 3, 3, 2],
+            "Resistance_26w": [100] * 4,
+            "Support_26w": [50] * 4,
+            "Stage2A": [False, False, False, True],
+            "Stage4A": [False] * 4,
+        }
+    )
+    out = add_crypto_transition_semantics(
+        add_transition_events(df),
+        recent_stage1_lookback_weeks=3,
+    )
+
+    assert out.loc[3, "Stage2A_NoRecentStage1_Event"]
+    assert not out.loc[3, "Stage2A_RecentStage1_Event"]

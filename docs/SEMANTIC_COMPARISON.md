@@ -111,3 +111,7 @@ decision or meaningful transaction-cost comparison.
 - Do not accept the current Stage 2A episode rule.
 - Test causal base-quality diagnostics for Stage 2A before expanding the crypto
   universe or changing thresholds.
+
+That base-quality experiment is complete. See
+`docs/BASE_QUALITY_COMPARISON.md`; the recent-Stage-1 binary rule was not
+selective enough to accept.

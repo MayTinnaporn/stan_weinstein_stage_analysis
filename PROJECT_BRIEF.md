@@ -181,6 +181,13 @@ Initial candidate evidence:
 
 A value such as `Volume Ratio >= 1.3` is an experimental parameter, not a fixed Weinstein rule.
 
+Current Stage 2A research also persists causal base-quality diagnostics in
+parallel with V0: prior-window return, range and volatility, resistance age,
+weeks since Stage 1, breakout distance in ATR units, and next-week
+confirmation. These are research measurements, not accepted classifier or
+notification rules. See `docs/BASE_QUALITY_COMPARISON.md` for the frozen
+four-asset experiment and its decision.
+
 ## 4.6 Crypto Stage 4A
 
 Candidate evidence:

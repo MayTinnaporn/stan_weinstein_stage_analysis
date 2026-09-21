@@ -54,6 +54,8 @@ columns, so a condition persisting for several weeks produces one event.
 For crypto research, parallel episode-start, continuation, and next-week
 confirmation columns are also persisted. They remain experimental and must not
 replace the V0 notification fields until their semantics are accepted.
+Stage 2A base-quality diagnostics and recent-Stage-1 labels are likewise
+research-only and do not alter `signals.csv`.
 
 ### 4. Persist before delivery
 
@@ -96,6 +98,7 @@ version, and new versus continuing candidates.
 | Forward-return summaries | Implemented |
 | Research transition backtest | Implemented |
 | Frozen-rule crypto walk-forward report | Implemented |
+| Stage 2A causal base-quality diagnostics | Implemented |
 | Live CoinGecko top-40 provider | Pending |
 | Historical S&P 500 membership feed | Pending |
 | Monday scheduler | Pending |

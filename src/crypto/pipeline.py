@@ -47,6 +47,7 @@ def build_crypto_analysis(
         structure_lookback=int(features_cfg["structure_lookback"]),
         volume_lookback=int(features_cfg["volume_lookback"]),
         momentum_lookback=int(features_cfg["momentum_lookback"]),
+        base_quality_lookback=int(features_cfg["base_quality_lookback"]),
         rs_lookback=int(features_cfg["rs_lookback"]),
         rs_slope_period=int(features_cfg["rs_slope_period"]),
     )
@@ -68,6 +69,10 @@ def build_crypto_analysis(
         result,
         stage2_rearm_stages=semantics_cfg.get("stage2_rearm_stages", (1, 4)),
         stage4_rearm_stages=semantics_cfg.get("stage4_rearm_stages", (2, 3)),
+        recent_stage1_lookback_weeks=int(
+            semantics_cfg.get("recent_stage1_lookback_weeks", 13)
+        ),
+        recent_stage1_min_weeks=int(semantics_cfg.get("recent_stage1_min_weeks", 1)),
     )
 
     return result

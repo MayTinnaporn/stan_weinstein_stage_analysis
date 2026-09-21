@@ -39,12 +39,22 @@ def _weeks_since_event(event: pd.Series) -> pd.Series:
     values: list[object] = []
     last_position: int | None = None
     for position, is_event in enumerate(event.fillna(False).astype(bool)):
-        values.append(
-            pd.NA if last_position is None else position - last_position
-        )
+        values.append(pd.NA if last_position is None else position - last_position)
         if is_event:
             last_position = position
     return pd.Series(values, index=event.index, dtype="Int64")
+
+
+def _weeks_since_stage(stage: pd.Series, target_stage: int) -> pd.Series:
+    """Return completed weeks since the latest occurrence of a Stage."""
+    values: list[object] = []
+    last_position: int | None = None
+    for position, stage_value in enumerate(stage):
+        values.append(pd.NA if last_position is None else position - last_position)
+        if not pd.isna(stage_value) and int(stage_value) == target_stage:
+            last_position = position
+            values[-1] = 0
+    return pd.Series(values, index=stage.index, dtype="Int64")
 
 
 def _classify_episode_events(
@@ -69,9 +79,8 @@ def _classify_episode_events(
         strict=True,
     ):
         should_rearm = (
-            (not pd.isna(stage_value) and int(stage_value) in rearm_values)
-            or bool(is_opposite)
-        )
+            not pd.isna(stage_value) and int(stage_value) in rearm_values
+        ) or bool(is_opposite)
         if should_rearm:
             armed = True
             active_episode = None
@@ -100,6 +109,8 @@ def add_crypto_transition_semantics(
     *,
     stage2_rearm_stages: Iterable[int] = (1, 4),
     stage4_rearm_stages: Iterable[int] = (2, 3),
+    recent_stage1_lookback_weeks: int = 13,
+    recent_stage1_min_weeks: int = 1,
 ) -> pd.DataFrame:
     """Add causal episode and next-week confirmation diagnostics.
 
@@ -122,13 +133,27 @@ def add_crypto_transition_semantics(
         raise ValueError(
             f"Transition semantics input is missing columns: {sorted(missing)}"
         )
+    if recent_stage1_lookback_weeks <= 0:
+        raise ValueError("recent_stage1_lookback_weeks must be > 0")
+    if recent_stage1_min_weeks <= 0:
+        raise ValueError("recent_stage1_min_weeks must be > 0")
 
     out = df.copy()
-    out["Stage_Run_ID"], out["Weeks_In_Stage"] = _stage_run_diagnostics(
-        out["Stage"]
-    )
+    out["Stage_Run_ID"], out["Weeks_In_Stage"] = _stage_run_diagnostics(out["Stage"])
     out["Weeks_Since_Stage2A_Event"] = _weeks_since_event(out["Stage2A_Event"])
     out["Weeks_Since_Stage4A_Event"] = _weeks_since_event(out["Stage4A_Event"])
+    out["Weeks_Since_Stage1"] = _weeks_since_stage(out["Stage"], 1)
+    out["Stage1_Weeks_Prior_Window"] = (
+        out["Stage"]
+        .eq(1)
+        .shift(1)
+        .rolling(
+            recent_stage1_lookback_weeks,
+            min_periods=recent_stage1_lookback_weeks,
+        )
+        .sum()
+        .astype("Int64")
+    )
 
     for direction, opposite, rearm_stages in (
         ("Stage2A", "Stage4A", stage2_rearm_stages),
@@ -144,14 +169,10 @@ def add_crypto_transition_semantics(
         out[f"{direction}_Continuation_Event"] = continuations
         out[f"{direction}_Episode_ID"] = episode_ids
 
-    stage2_evaluation = out["Stage2A_EpisodeStart_Event"].shift(
-        1, fill_value=False
-    )
+    stage2_evaluation = out["Stage2A_EpisodeStart_Event"].shift(1, fill_value=False)
     stage2_level = out["Resistance_26w"].shift(1)
     stage2_confirmed = (
-        stage2_evaluation
-        & (out["Stage"] == 2)
-        & (out["Close"] > stage2_level)
+        stage2_evaluation & (out["Stage"] == 2) & (out["Close"] > stage2_level)
     ).fillna(False)
     out["Stage2A_Confirmation_Evaluated"] = stage2_evaluation.astype(bool)
     out["Stage2A_Confirmation_Level"] = stage2_level.where(stage2_evaluation)
@@ -160,14 +181,24 @@ def add_crypto_transition_semantics(
         stage2_evaluation & ~stage2_confirmed
     ).astype(bool)
 
-    stage4_evaluation = out["Stage4A_EpisodeStart_Event"].shift(
-        1, fill_value=False
-    )
+    recent_stage1 = (
+        out["Stage1_Weeks_Prior_Window"] >= recent_stage1_min_weeks
+    ).fillna(False)
+    out["Stage2A_RecentStage1_Event"] = (
+        out["Stage2A_EpisodeStart_Event"] & recent_stage1
+    ).astype(bool)
+    out["Stage2A_NoRecentStage1_Event"] = (
+        out["Stage2A_EpisodeStart_Event"] & ~recent_stage1
+    ).astype(bool)
+    out["Stage2A_ConfirmedRecentStage1_Event"] = (
+        out["Stage2A_Confirmed_Event"]
+        & out["Stage2A_RecentStage1_Event"].shift(1, fill_value=False)
+    ).astype(bool)
+
+    stage4_evaluation = out["Stage4A_EpisodeStart_Event"].shift(1, fill_value=False)
     stage4_level = out["Support_26w"].shift(1)
     stage4_confirmed = (
-        stage4_evaluation
-        & (out["Stage"] == 4)
-        & (out["Close"] < stage4_level)
+        stage4_evaluation & (out["Stage"] == 4) & (out["Close"] < stage4_level)
     ).fillna(False)
     out["Stage4A_Confirmation_Evaluated"] = stage4_evaluation.astype(bool)
     out["Stage4A_Confirmation_Level"] = stage4_level.where(stage4_evaluation)
